@@ -44,6 +44,15 @@
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
 
+                            @if (auth()->user()->tenants()->count() > 1)
+                                @foreach (auth()->user()->tenants as $tenant)
+                                    <a href="{{ route('tenants.change', $tenant->id) }}" class="@if (auth()->user()->current_tenant_id == $tenant->id) font-bold @endif
+                                        block px-4 py-2 text-sm leading-5 text-gray-700 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out">
+                                        {{ $tenant->name }}
+                                    </a>
+                                @endforeach
+                            @endif
+
                             <x-dropdown-link :href="route('logout')"
                                     onclick="event.preventDefault();
                                                 this.closest('form').submit();">
