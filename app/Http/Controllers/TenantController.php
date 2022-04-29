@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Providers\RouteServiceProvider;
+
 class TenantController extends Controller
 {
     public function changeTenant($tenantID)
@@ -13,6 +15,7 @@ class TenantController extends Controller
         auth()->user()->update(['current_tenant_id' => $tenantID]);
 
         // Redirect to dashboard
-        return redirect()->route('dashboard');
+        $tenantDomain = str_replace('://', '://' . $tenant->subdomain . '.', config('app.url'));
+        return redirect($tenantDomain . RouteServiceProvider::HOME);
     }
 }
