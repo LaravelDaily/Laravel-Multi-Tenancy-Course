@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Invitation;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
@@ -21,7 +22,16 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        return view('auth.register');
+        $invitationEmail = NULL;
+        if (request('token')) {
+            $invitation = Invitation::where('token', request('token'))
+                ->whereNull('accepted_at')
+                ->firstOrFail();
+
+            $invitationEmail = $invitation->email;
+        }
+
+        return view('auth.register', compact('invitationEmail'));
     }
 
     /**
@@ -36,29 +46,51 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'subdomain' => ['required', 'alpha', 'unique:tenants,subdomain'],
+            'subdomain' => ['sometimes', 'alpha', 'unique:tenants,subdomain'],
         ]);
+
+        $email = $request->email;
+        if ($request->token) {
+            $invitation = Invitation::with('tenant')
+                ->where('token', $request->token)
+                ->whereNull('accepted_at')
+                ->first();
+
+            if (!$invitation) {
+                return redirect()->back()->withInput()->withErrors(['email' => __('Invitation link incorrect')]);
+            }
+
+            $email = $invitation->email;
+        }
 
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => $email,
             'password' => Hash::make($request->password),
         ]);
 
-        $tenant = Tenant::create([
-            'name' => $request->name . ' Team',
-            'subdomain' => $request->subdomain
-        ]);
-        $tenant->users()->attach($user->id, ['is_owner' => true]);
-        $user->update(['current_tenant_id' => $tenant->id]);
+        $subdomain = $request->subdomain;
+        if ($invitation) {
+            $invitation->update(['accepted_at' => now()]);
+            $invitation->tenant->users()->attach($user->id);
+            $user->update(['current_tenant_id' => $invitation->tenant_id]);
+            $subdomain = $invitation->tenant->subdomain;
+        } else {
+            $tenant = Tenant::create([
+                'name' => $request->name . ' Team',
+                'subdomain' => $request->subdomain
+            ]);
+            $tenant->users()->attach($user->id, ['is_owner' => true]);
+            $user->update(['current_tenant_id' => $tenant->id]);
+        }
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        $tenantDomain = str_replace('://', '://' . $request->subdomain . '.', config('app.url'));
+        $tenantDomain = str_replace('://', '://' . $subdomain . '.', config('app.url'));
         return redirect($tenantDomain . RouteServiceProvider::HOME);
     }
 }
