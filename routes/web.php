@@ -32,4 +32,7 @@ Route::group(['middleware' => 'auth'], function() {
         ->middleware('can:manage_users');
 });
 
+Route::get('invitations/{token}', [\App\Http\Controllers\UserController::class, 'acceptInvitation'])
+    ->name('invitations.accept');
+
 require __DIR__.'/auth.php';
