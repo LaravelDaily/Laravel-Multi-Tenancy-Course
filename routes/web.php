@@ -26,6 +26,10 @@ Route::group(['middleware' => 'auth'], function() {
 
     Route::get('tenants/change/{tenantID}', [\App\Http\Controllers\TenantController::class, 'changeTenant'])
         ->name('tenants.change');
+
+    Route::resource('users', \App\Http\Controllers\UserController::class)
+        ->only('index', 'store')
+        ->middleware('can:manage_users');
 });
 
 require __DIR__.'/auth.php';
