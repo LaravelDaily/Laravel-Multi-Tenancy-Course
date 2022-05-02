@@ -20,8 +20,10 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 Route::middleware([
     'web',
+    'auth',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    \App\Http\Middleware\CheckTenantUserMiddleware::class,
 ])->group(function () {
     Route::view('/dashboard', 'dashboard')->name('dashboard');
 
