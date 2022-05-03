@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Auth\Events\Registered;
@@ -37,6 +38,7 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'subdomain' => ['required', 'alpha', 'unique:tenants,domain']
         ]);
 
         $user = User::create([
@@ -45,10 +47,16 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        $tenant = Tenant::create([
+            'name' => $request->name,
+            'domain' => $request->subdomain . config('session.domain'),
+            'database' => $request->subdomain,
+        ]);
+        $user->tenants()->attach($tenant->id);
+
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(RouteServiceProvider::HOME);
-    }
+        return redirect('http://' . $request->subdomain . config('session.domain') . '/dashboard');    }
 }
