@@ -17,12 +17,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
-Route::group(['middleware' => 'auth'], function() {
-    Route::view('/dashboard', 'dashboard')->name('dashboard');
-
-    Route::resource('tasks', \App\Http\Controllers\TaskController::class);
-    Route::resource('projects', \App\Http\Controllers\ProjectController::class);
-});
-
 require __DIR__.'/auth.php';
