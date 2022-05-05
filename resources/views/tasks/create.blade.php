@@ -32,6 +32,13 @@
                             </x-select>
                         </div>
 
+                        <!-- Description -->
+                        <div class="mt-4">
+                            <x-label for="description" :value="__('Description')"/>
+
+                            <x-input id="description" class="block mt-1 w-full" type="text" name="description" :value="old('description')" />
+                        </div>
+
                         <div class="flex mt-4">
                             <x-button>
                                 {{ __('Save Task') }}
