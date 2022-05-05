@@ -28,4 +28,7 @@ Route::middleware([
 
     Route::resource('tasks', \App\Http\Controllers\TaskController::class);
     Route::resource('projects', \App\Http\Controllers\ProjectController::class);
+
+    Route::get('accounts/delete', [\App\Http\Controllers\UserController::class, 'destroy'])
+        ->name('account-delete');
 });
