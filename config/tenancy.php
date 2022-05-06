@@ -16,7 +16,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     'central_domains' => [
-        'project3.test',
+        'tenancy.test',
     ],
 
     /**
